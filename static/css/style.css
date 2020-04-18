@@ -1,0 +1,8 @@
+#loginForm, #signupForm {
+  display: none;
+}
+
+table {
+  overflow-x: auto;
+  display: inline-block;
+}

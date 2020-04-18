@@ -1,0 +1,174 @@
+<h1>Jobs</h1>
+
+<br/><hr/>
+<!-- <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#postJobs">
+  Post a new job!
+</button> -->
+
+<a class="waves-effect waves-light btn modal-trigger" href="#postJobs">Post a new job!</a>
+
+<div id="postJobs" class="modal">
+  {% include "forms/addJob.html" %}
+</div>
+
+<br/><br/>
+
+{% if jobs %}
+<label>
+  <input id="sortReverse" type="checkbox"/>
+  <span>Reverse</span>
+</label>
+&nbsp;
+<label>
+  <input id="sortPrice" type="checkbox"/>
+  <span>Highest price</span>
+</label>
+&nbsp;
+<label>
+  <input id="sortPostedDate" type="checkbox"/>
+  <span>Latest date posted</span>
+</label>
+&nbsp;
+<label>
+  <input id="sortDuration" type="checkbox"/>
+  <span>Shortest duration</span>
+</label>
+&nbsp;
+<label>
+  <input id="hideTaken" type="checkbox"/>
+  <span>Hide taken jobs</span>
+</label>
+&nbsp;
+<label>
+  <input id="postedByMe" type="checkbox"/>
+  <span>Posted by me</span>
+</label>
+&nbsp;
+<label>
+  <input id="showMyJobs" type="checkbox"/>
+  <span>Show my jobs</span>
+</label>
+
+  <!-- <div class="float-right btn-group" role="group">
+    <button type="button" id="sortReverse" class="btn btn-sm btn-light">Reverse</button>
+    <button type="button" id="sortPrice" class="btn btn-sm btn-light">Highest price</button>
+    <button type="button" id="sortDuration" class="btn btn-sm btn-light">Shortest duration</button>
+    <button type="button" id="sortPostedDate" class="btn btn-sm btn-light">Earliest date posted</button>
+    <button type="button" id="hideTaken" class="btn btn-sm btn-light">Hide taken jobs</button>
+  </div> -->
+{% endif %}
+
+<!-- <div class="modal fade" id="postJobs" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Post a new job</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div> -->
+
+<br/><br/>
+
+<div id="allJobs">
+  {% if jobs %}
+    {% for job in jobs %}
+      {% set jobID = job["jobID"] %}
+      <div id={{jobID}} class="card darken-1"
+      data-item-duration='{{job["jobDuration"]}}'
+      data-item-price='{{job["jobPrice"]}}'
+      data-item-datePosted='{{job["jobDatePosted"]}}'
+      data-item-receiver='{{job["jobReceiver"]}}'
+      data-item-hidden="false"
+      data-item-sender='{{job["jobSender"]}}'>
+        <div class="card-content">
+          <span class="card-title">
+            <span class="badge">{{job["jobSender"]}}</span>
+            {{job["jobTitle"]}}
+          </span>
+          <p>{{job["jobDescription"]}}</p>
+          <p><strong>Date start:</strong> {{job["jobDateStart"]}}</p>
+          <p><strong>Date end:</strong> {{job["jobDateEnd"]}}</p>
+          <p><strong>Duration:</strong> {{job["jobDuration"]}}</p>
+          <span class="badge">SGD{{job["jobPrice"]}}</span>
+          <span class="badge">
+            <i class="material-icons tiny">location_on</i>
+            {{job["jobLocation"]}}
+          </span>
+        </div>
+        <div class="card-action">
+          <a href="{{url_for('see', id=jobID)}}">Find out more</a>
+        </div>
+      </div>
+    {% endfor %}
+  {% else %}
+    <h3>There are no jobs available!</h3>
+  {% endif %}
+</div>
+<!-- {% if jobs %}
+  <table class="table">
+    <thead>
+      <tr>
+        <th scope="col">Title</th>
+        <th scope="col">Description</th>
+        <th scope="col">Location</th>
+        <th scope="col">Price</th>
+        <th scope="col">Date Posted</th>
+        <th scope="col">Date Start</th>
+        <th scope="col">Date End</th>
+        <th scope="col">Duration</th>
+        <th scope="col">Posted By</th>
+        <th scope="col">Taken By</th>
+      </tr>
+    </thead>
+    <tbody id="allJobs">
+      {% for job in jobs %}
+        <tr>
+          <th scope="row">
+            <a href="{{url_for('see', id=job['jobID'])}}">{{job["jobTitle"]}}</a>
+          </th>
+          <td>{{job["jobDescription"]}}</td>
+          <td>{{job["jobLocation"]}}</td>
+          <td>SGD{{job["jobPrice"]}}</td>
+          <td>{{job["jobDatePosted"]}}</td>
+          <td>{{job["jobDateStart"]}}</td>
+          <td>{{job["jobDateEnd"]}}</td>
+          <td data-item-duration='{{job["jobDurationRaw"]}}'>{{job["jobDuration"]}}</td>
+          <td>{{job["jobSender"]}}</td>
+          <td>{{job["jobReceiver"]}}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% else %}
+  <div class="card border-info">
+    <div class="card-body">
+      There are no jobs available at the moment.
+    </div>
+  </div>
+{% endif %} -->
+
+<script type="text/javascript">
+  var addJobForm = document.getElementById("addJobForm");
+  addJobForm.onsubmit = function () {
+    event.preventDefault();
+    var dateStart = new Date(document.getElementById("dateStart").value + "T" + document.getElementById("timeStart").value + ":00");
+    var dateEnd = new Date(document.getElementById("dateEnd").value + "T" + document.getElementById("timeEnd").value + ":00");
+    if (dateStart > dateEnd) {
+      M.toast({html: "Date start cannot be greater than date end!"});
+    }
+    else {
+      addJobForm.submit();
+    }
+  };
+</script>
+
+{% if jobs %}
+  <script type="text/javascript">
+    {% include "js/jobs.js" %}
+  </script>
+{% endif %}

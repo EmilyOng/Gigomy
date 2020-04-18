@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <!-- <div class="row">
+    <div class="col text-center">
+      <button type="button" id="loginButton" class="btn btn-dark">Login</button>
+      <button type="button" id="signupButton" class="btn btn-dark">Signup</button>
+    </div>
+  </div> -->
+  <ul class="collapsible">
+    <li>
+      <div class="collapsible-header"><i class="material-icons">account_circle</i>Login</div>
+      <div class="collapsible-body">{% include "forms/login.html" %}</div>
+    </li>
+    <li>
+      <div class="collapsible-header"><i class="material-icons">add_circle</i>Signup</div>
+      <div class="collapsible-body">{% include "forms/signup.html" %}</div>
+    </li>
+  </ul>
+
+  {% if msg %}
+    <script type="text/javascript">
+      {% include "js/error.js" %}
+    </script>
+  {% endif %}
+
+{% endblock content %}

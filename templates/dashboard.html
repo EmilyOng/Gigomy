@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <div class="card">
+    <div class="card-content">
+      <h3>Here are all your current job statuses</h3>
+    </div>
+    <div class="card-tabs">
+      <ul class="tabs tabs-fixed-width">
+        <li class="tab"><a class="active" href="#jobsReceived">Jobs Received</a></li>
+        <li class="tab"><a href="#jobsSent">Jobs Sent</a></li>
+      </ul>
+    </div>
+    <div class="card-content grey lighten-4">
+      <div id="jobsReceived">
+        {% for job in jobsReceived %}
+          <ul class="collection">
+            <li class="collection-item">
+              {% set jobID = job["jobID"] %}
+              <a href="{{url_for('see', id=jobID)}}">
+                <span class="title"><strong>{{job["jobTitle"]}}</strong></span>
+              </a>
+              <span class="badge">{{job["jobDatePosted"]}}</span>
+              <p>{{job["jobDateStart"]}} to {{job["jobDateEnd"]}}</p>
+            </li>
+          </ul>
+        {% endfor %}
+      </div>
+      <div id="jobsSent">
+        {% for job in jobsSent %}
+        <ul class="collection">
+          <li class="collection-item">
+            {% set jobID = job["jobID"] %}
+            <a href="{{url_for('see', id=jobID)}}">
+              <span class="title"><strong>{{job["jobTitle"]}}</strong></span>
+            </a>
+            <span class="badge">{{job["jobDatePosted"]}}</span>
+            {% if not job["jobReceiver"] %}
+              <span class="red new badge" data-badge-caption="Already taken!"></span>
+            {% else %}
+              <span class="new badge" data-badge-caption="Not yet taken!"></span>
+            {% endif %}
+          </li>
+        </ul>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <br/><br/>
+  <div class="row">
+    <div class="col text-center">
+      <a href="/"><button type="button" class="btn btn-light">Back</button></a>
+    </div>
+  </div>
+  
+{% endblock content %}

@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <div id={{job["jobID"]}} class="card darken-1">
+    <div class="card-content">
+      <span class="card-title">
+        {% if job["jobReceiver"] %}
+          {% if job["jobReceiver"] == current_user["username"] %}
+            <span class="red new badge" data-badge-caption="Your job!"></span>
+          {% else %}
+            <span class="red new badge" data-badge-caption="Already taken!"></span>
+          {% endif %}
+        {% else %}
+          <span class="new badge" data-badge-caption="Not yet taken!"></span>
+        {% endif %}
+        <span class="badge">{{job["jobSender"]}}</span>
+        {{job["jobTitle"]}}
+      </span>
+      <p>{{job["jobDescription"]}}</p>
+      <p><strong>Date start:</strong> {{job["jobDateStart"]}}</p>
+      <p><strong>Date end:</strong> {{job["jobDateEnd"]}}</p>
+      <p><strong>Duration:</strong> {{job["jobDuration"]}}</p>
+      <p><strong>Price:</strong> {{job["jobPrice"]}}</p>
+      <p><strong>Location:</strong> {{job["jobLocation"]}}</p>
+      <ul class="collection">
+        <li class="collection-item avatar">
+          <i class="material-icons circle">account_circle</i>
+          <span class="title"><strong>Job poster:</strong> {{jobSender["username"]}}</span>
+          <p><a href="mailto:{{jobSender['email']}}?subject=Gigomy">{{jobSender["email"]}}</a></p>
+        </li>
+      </ul>
+    </div>
+
+    <div class="card-action">
+      <a href="{{url_for('chat', username=jobSender['username'])}}">Chat</a>
+      {% if jobSender["username"] != currentUser["username"] and not job["jobReceiver"] %}
+        <a href="{{url_for('takeUpJob', jobID=job['jobID'])}}">Take up</a>
+      {% endif %}
+      {% if job["jobReceiver"] == currentUser["username"] %}
+        <a href="{{url_for('abandonJob', jobID=job['jobID'])}}">Abandon</a>
+      {% endif %}
+    </div>
+  </div>
+  <br/><br/>
+  <div class="row">
+    <div class="col text-center">
+      <a href="/"><button type="button" class="btn btn-light">Back</button></a>
+    </div>
+  </div>
+{% endblock content %}

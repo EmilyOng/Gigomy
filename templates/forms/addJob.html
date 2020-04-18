@@ -1,0 +1,64 @@
+<form method="POST" action="/addJob" id="addJobForm">
+  <div class="modal-content">
+    <h4>Post a new job!</h4>
+    <br/>
+    <!-- TITLE -->
+    <div class="row">
+      <div class="input-field">
+        <input placeholder="Buy groceries" id="title" type="text" class="validate" name="title" required>
+        <label for="title">Title</label>
+      </div>
+    </div>
+    <!-- DESCRIPTION -->
+    <div class="row">
+      <div class="input-field">
+        <textarea placeholder="" id="description" name="description" class="materialize-textarea" required></textarea>
+        <label for="description">Description</label>
+      </div>
+    </div>
+    <!-- LOCATION -->
+    <div class="row">
+      <div class="input-field">
+        <input placeholder="Singapore" id="location" type="text" class="validate" name="location" required>
+        <label for="location">Location</label>
+      </div>
+    </div>
+    <!-- PRICE -->
+    <div class="row">
+      <div class="input-field">
+        <input placeholder="2.00" id="price" type="number" min="0" step="0.10" data-number-to-fixed="2" data-number-stepfactor="1"  class="validate" name="price" required>
+        <label for="price">Price (SGD$)</label>
+      </div>
+    </div>
+    <!-- DATE START -->
+    <div class="row">
+      <div class="input-field col s6">
+        <input placeholder="" id="dateStart" name="dateStart" type="date" class="validate" required>
+        <label for="dateStart">Date Start</label>
+      </div>
+      <!-- TIME START -->
+      <div class="input-field col s6">
+        <input placeholder="00:00" id="timeStart" name="timeStart" type="text" class="validate">
+        <label for="timeStart">Time Start</label>
+      </div>
+    </div>
+    <!-- DATE END -->
+    <div class="row">
+      <div class="input-field col s6">
+        <input placeholder="" id="dateEnd" name="dateEnd" type="date" class="validate" required>
+        <label for="dateEnd">Date end</label>
+      </div>
+      <!-- TIME END -->
+      <div class="input-field col s6">
+        <input placeholder="00:00" id="timeEnd" name="timeEnd" type="text" class="validate">
+        <label for="timeEnd">Time End</label>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-footer">
+    <button class="btn waves-effect waves-light" type="submit" name="addJob">Submit
+      <i class="material-icons right">send</i>
+    </button>
+  </div>
+</form>
