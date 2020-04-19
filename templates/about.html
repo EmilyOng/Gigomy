@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h1>Gigomy</h1>
+  <small>The Gig Economy</small>
+
+  <div class="card">
+    <div class="card-content">
+      <blockquote>
+        Our economy is taking a big hit...But with things still unfolding, we knew we might have to do more.
+        The situation is especially serious for some sectors - hotels, aviation, hospitality, and freelancers in the <h5 style="display:inline;">gig economy</h5>.
+        But nobody has been spared. Everyone feels the impact, to different degrees.
+        <footer>- <a href="https://www.straitstimes.com/singapore/coronavirus-full-text-of-speech-by-pm-lee-hsien-loong-on-the-covid-19-outbreak">PM Lee Hsien Loong, on the Covid-19 outbreak</a></footer>
+      </blockquote>
+    </div>
+    <div class="card-tabs">
+      <ul class="tabs tabs-fixed-width">
+        <li class="tab"><a class="active" href="#rationale">Rationale</a></li>
+        <li class="tab"><a href="#technical">Technical Details</a></li>
+      </ul>
+    </div>
+    <div class="card-content grey lighten-4">
+      <div id="rationale">
+        <p>
+          One of the most significant impact of the Covid-19 virus is its impact on the economy, with many people
+          losing their jobs. Unemployment refers to a situation where people of the legal working age are actively
+          looking for work, but are unable to find work.
+        </p>
+        <br/>
+        <p>
+          In the short run, this would lead to a loss of income, which reduces the purchasing power of people, and enable
+          them to buy lesser goods and services (including necessities!) to satisfy their needs and wants. This could
+          lead them to have a lower standard of living.
+        </p>
+        <br/>
+        <p>
+          On a larger scale, unemployment leading to a less productive workforce can make Singapore less attractive as
+          an investment destination, which is detrimental to the future growth of Singapore in the long run. Furthermore,
+          long-term unemployment can lead to hysteresis, which is a loss of skills, and can make it harder for the unemployed
+          to return to the workforce.
+        </p>
+        <br/>
+        <p>
+          While I acknowledge that taking up ad-hoc jobs through Gigomy is not a direct solution to solving unemployment, as
+          people are afterall, working below their productive capacity, it serves as a temporary short-term source of income;
+          This is especially important as they can then use this additional income as means to alleviate the current lack of
+          income to purchase necessities, allowing them more time and income to be directed towards up-skilling themselves,
+          making it easier to transform to productive labour when the Covid-19 situation ends.
+        </p>
+      </div>
+      <div id="technical">
+        <h3>Technologies</h3>
+        <ul class="collection with-header">
+          <li class="collection-header"><h5>Python</h5></li>
+          <li class="collection-item">flask <small>for web framework</small></li>
+          <li class="collection-item">flask_socketio <small>for real-time</small></li>
+          <li class="collection-item">flask_sqlalchemy <small>for database</small></li>
+          <li class="collection-item">flask_login <small>for user sessions</small></li>
+          <li class="collection-item">werkzeug <small>for password hashing</small></li>
+        </ul>
+        <ul class="collection with-header">
+          <li class="collection-header"><h5>Javascript</h5></li>
+          <li class="collection-item">jquery</li>
+          <li class="collection-item">materialize.js</li>
+          <li class="collection-item">socket.io</li>
+          <li class="collection-item">flatpikr.js</li>
+        </ul>
+        <ul class="collection with-header">
+          <li class="collection-header"><h5>CSS</h5></li>
+          <li class="collection-item">materialize</li>
+          <li class="collection-item">flatpikr</li>
+        </ul>
+        <h3>Functionalities</h3>
+        <ul class="collection with-header">
+          <li class="collection-header">
+            <h5>General</h5>
+          </li>
+          <li class="collection-item">Login function using email, username and password</li>
+          <li class="collection-item">Passwords are stored as hash</li>
+          <li class="collection-item">Share page on facebook</li>
+          <li class="collection-item">Mobile responsive</li>
+        </ul>
+        <ul class="collection with-header">
+          <li class="collection-header">
+            <h5>Database Design</h5>
+          </li>
+          <li class="collection-item"><strong>User</strong>(<u>username</u>, email, password, avatar)</li>
+          <li class="collection-item"><strong>Message</strong>(<u>msgID</u>, msgText, msgDateTime, msgSender, msgReceiver)</li>
+          <li class="collection-item"><strong>Job</strong>(<u>jobID</u>, jobTitle, jobDescription, jobLocation, jobPrice, jobDatePosted, jobDateStart, jobDateEnd, jobSender, jobReceiver)</li>
+        </ul>
+        <ul class="collection with-header">
+          <li class="collection-header">
+            <h5>Dashboard</h5>
+          </li>
+          <li class="collection-item">Shows all jobs posted by and received by the user</li>
+        </ul>
+        <ul class="collection with-header">
+          <li class="collection-header">
+            <h5>Job</h5>
+          </li>
+          <li class="collection-item">Displays a list of job</li>
+          <li class="collection-item">Filter jobs based on certain criteria</li>
+          <li class="collection-item">Post new jobs</li>
+          <li class="collection-item">Take up/abandon specific jobs</li>
+        </ul>
+        <ul class="collection with-header">
+          <li class="collection-header">
+            <h5>Chat</h5>
+          </li>
+          <li class="collection-item">Displays a list of contacts that the user has chatted with</li>
+          <li class="collection-item">Chat with other users</li>
+          <li class="collection-item">Real-time notifications when the receiver is online</li>
+          <li class="collection-item">Private chats as messages are emitted to unique rooms</li>
+          <li class="collection-item">Messages are stored in the database</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+{% endblock content %}

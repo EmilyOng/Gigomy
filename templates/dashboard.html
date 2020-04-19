@@ -20,8 +20,8 @@
               <a href="{{url_for('see', id=jobID)}}">
                 <span class="title"><strong>{{job["jobTitle"]}}</strong></span>
               </a>
-              <span class="badge">{{job["jobDatePosted"]}}</span>
-              <p>{{job["jobDateStart"]}} to {{job["jobDateEnd"]}}</p>
+              <span class="new badge" data-badge-caption='{{job["jobDatePosted"]}}'></span>
+              <p>Duration: {{job["jobDateStart"]}} to {{job["jobDateEnd"]}}</p>
             </li>
           </ul>
         {% endfor %}
@@ -34,7 +34,7 @@
             <a href="{{url_for('see', id=jobID)}}">
               <span class="title"><strong>{{job["jobTitle"]}}</strong></span>
             </a>
-            <span class="badge">{{job["jobDatePosted"]}}</span>
+            <span class="new badge" data-badge-caption='{{job["jobDatePosted"]}}'></span>
             {% if not job["jobReceiver"] %}
               <span class="red new badge" data-badge-caption="Already taken!"></span>
             {% else %}
@@ -48,10 +48,7 @@
   </div>
 
   <br/><br/>
-  <div class="row">
-    <div class="col text-center">
-      <a href="/"><button type="button" class="btn btn-light">Back</button></a>
-    </div>
-  </div>
-  
+  <a href="/"><button type="button" class="btn btn-light">Back</button></a>
+
+
 {% endblock content %}

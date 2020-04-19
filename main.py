@@ -61,6 +61,28 @@ def processJob (job):
             "jobDuration": jobDuration, "jobDurationRaw": jobDurationRaw}
     return job_
 
+def getJobDetails (data):
+    title = data["title"]
+    description = data["description"]
+    location = data["location"]
+    price = data["price"]
+    dateStart_ = data["dateStart"].split("-")
+    dateEnd_ = data["dateEnd"].split("-")
+
+    timeStart = data["timeStart"].split(":")
+    timeEnd = data["timeEnd"].split(":")
+
+    dateStart = datetime.datetime(int(dateStart_[0]), int(dateStart_[1]), int(dateStart_[2]),
+                            int(timeStart[0]), int(timeStart[1]), 0)
+    dateEnd = datetime.datetime(int(dateEnd_[0]), int(dateEnd_[1]), int(dateEnd_[2]),
+                            int(timeEnd[0]), int(timeEnd[1]), 0)
+
+    datePosted = datetime.datetime.now()
+
+    job = {"title": title, "description": description, "location": location,
+            "price": price, "dateStart": dateStart, "dateEnd": dateEnd, "datePosted": datePosted}
+    return job
+
 
 CONNECTED_USERS = {}
 
@@ -77,7 +99,6 @@ login.login_view = "index"
 
 class User(UserMixin, db.Model):
     username = db.Column(db.String, unique = True, nullable = False, index = True, primary_key = True)
-    # hashed = db.Column(db.String, unique = True, nullable = False)
     email = db.Column(db.String, unique = True, index = True, nullable = False)
     password = db.Column(db.String, nullable = False)
     avatar = db.Column(db.String, nullable = True)
@@ -104,9 +125,16 @@ class Job(db.Model):
     jobSender = db.Column(db.String, db.ForeignKey("user.username"), nullable = False)
     jobReceiver = db.Column(db.String, db.ForeignKey("user.username"), nullable = True)
 
+
+@app.errorhandler(Exception)
+def handle_error(e):
+    return render_template("error.html")
+
+
 @login.user_loader
 def load_user(username):
     return User.query.get(username)
+
 
 @app.route("/")
 def index():
@@ -163,7 +191,7 @@ def login():
 @app.route ("/chat/", methods=["GET", "POST"])
 @login_required
 def chat (username=""):
-    inChat = len(username) != 0
+    inChat = len(username) != 0 and username != current_user.username
     currentUser = getUser(current_user)
     if inChat:
         jobSender_ = User.query.filter_by(username = username).first()
@@ -186,11 +214,9 @@ def chat (username=""):
     messages = []
     messages_.sort()
     for message in messages_:messages.append(message[1])
-
     # Get all contacts
     contacts = set()
     for message in messages:
-        print(message.msgSender, message.msgReceiver)
         if message.msgSender == current_user.username:
             contacts.add(message.msgReceiver)
         if message.msgReceiver == current_user.username:
@@ -248,6 +274,11 @@ def overview ():
     return render_template("dashboard.html", jobsSent=jobsSent, jobsReceived=jobsReceived)
 
 
+@app.route("/about")
+def about ():
+    return render_template("about.html")
+
+
 @app.route("/takeUpJob/<jobID>")
 @login_required
 def takeUpJob (jobID):
@@ -255,6 +286,28 @@ def takeUpJob (jobID):
     if job is None:
         return redirect(url_for("index"))
     job.jobReceiver = current_user.username
+    db.session.commit()
+    return redirect(url_for("see", id=jobID))
+
+
+@app.route("/editJob/<jobID>", methods=["POST"])
+@login_required
+def editJob (jobID):
+    if not request.form:return redirect(url_for("index"))
+    # if "editJob" not in request.form:return redirect(url_for("index"))
+    job = Job.query.filter_by(jobID = int(jobID)).first()
+    if job is None or job.jobSender != current_user.username:
+        return redirect(url_for("index"))
+
+    job_ = getJobDetails(request.form)
+    # jobSender = current_user.username
+    job.jobTitle = job_["title"]
+    job.jobDescription = job_["description"]
+    job.jobLocation = job_["location"]
+    job.jobPrice = job_["price"]
+    job.jobDatePosted = job_["datePosted"]
+    job.jobDateStart = job_["dateStart"]
+    job.jobDateEnd = job_["dateEnd"]
     db.session.commit()
     return redirect(url_for("see", id=jobID))
 
@@ -328,28 +381,11 @@ def logout ():
 def addJob ():
     if not request.form: return redirect(url_for("index"))
     # if "addJob" not in request.form: return redirect(url_for("index"))
-    title = request.form["title"]
-    description = request.form["description"]
-    location = request.form["location"]
-    price = request.form["price"]
-    dateStart_ = request.form["dateStart"].split("-")
-    dateEnd_ = request.form["dateEnd"].split("-")
-
-    timeStart = request.form["timeStart"].split(":")
-    timeEnd = request.form["timeEnd"].split(":")
-
-    dateStart = datetime.datetime(int(dateStart_[0]), int(dateStart_[1]), int(dateStart_[2]),
-                            int(timeStart[0]), int(timeStart[1]), 0)
-    dateEnd = datetime.datetime(int(dateEnd_[0]), int(dateEnd_[1]), int(dateEnd_[2]),
-                            int(timeEnd[0]), int(timeEnd[1]), 0)
-
-    datePosted = datetime.datetime.now()
-
+    job_ = getJobDetails(request.form)
     jobSender = current_user.username
-
-    job = Job(jobTitle=title, jobDescription=description, jobLocation=location,
-            jobPrice=price, jobDatePosted=datePosted, jobDateStart=dateStart,
-            jobDateEnd=dateEnd, jobSender=jobSender)
+    job = Job(jobTitle=job_["title"], jobDescription=job_["description"], jobLocation=job_["location"],
+            jobPrice=job_["price"], jobDatePosted=job_["datePosted"], jobDateStart=job_["dateStart"],
+            jobDateEnd=job_["dateEnd"], jobSender=jobSender)
 
     db.session.add(job)
     db.session.commit()

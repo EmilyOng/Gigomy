@@ -4,46 +4,68 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Gigomy</title>
-    <!-- <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous"> -->
-    <!-- <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css"> -->
+
     <link type="text/css" rel="stylesheet" href="{{url_for('static', filename='css/materialize.min.css')}}"  media="screen,projection"/>
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <link rel="stylesheet" href="{{url_for('static', filename='css/style.css')}}">
-    <!-- <link rel="stylesheet" href="{{url_for('static', filename='css/bootstrap-clockpicker.min.css')}}"> -->
+    <link type="text/css" rel="stylesheet" href="{{url_for('static', filename='css/flatpikr.min.css')}}"  media="screen,projection"/>
+
     <script src="https://code.jquery.com/jquery-3.4.1.slim.min.js" integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n" crossorigin="anonymous"></script>
     <script type="text/javascript" src="{{url_for('static', filename='js/materialize.min.js')}}"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.0/socket.io.js"></script>
+    <script type="text/javascript" src="{{url_for('static', filename='js/flatpikr.js')}}"></script>
+
   </head>
   <body>
-    <!-- <nav class="navbar navbar-light bg-light">
-      <a class="navbar-brand" href="#">
-        Gigomy
-      </a>
-    </nav> -->
     <nav>
       <div class="nav-wrapper purple">
         <a href="/" class="brand-logo">&nbsp;Gigomy</a>
         <a href="/" data-target="mobile-demo" class="sidenav-trigger"><i class="material-icons">menu</i></a>
         <ul class="right hide-on-med-and-down">
+          <li><a href="/about">About</a></li>
           <li><a href="/overview">Dashboard</a></li>
+          <li><a href="/">Jobs</a></li>
           <li><a href="/chat">Chat</a></li>
+          <li><a href="/logout">Logout</a></li>
         </ul>
       </div>
     </nav>
 
     <ul class="sidenav" id="mobile-demo">
+      <li><a href="/about">About</a></li>
       <li><a href="/overview">Dashboard</a></li>
+      <li><a href="/">Jobs</a></li>
       <li><a href="/chat">Chat</a></li>
+      <li><a href="/logout">Logout</a></li>
     </ul>
 
-    <div class="container">
+    <main>
+      <div class="container">
+        <br/>
+        {% block content %}
+        {% endblock content %}
+      </div>
       <br/>
-      {% block content %}
-      {% endblock content %}
-    </div>
-    <!-- <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script> -->
-    <!-- <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script> -->
-    <!-- <script src="{{url_for('static', filename='js/jquery-clockpicker.min.js')}}"></script> -->
+    </main>
+
+    <footer class="page-footer purple">
+      <div class="container">
+        <div class="row">
+          <div class="col l6 s12">
+            <h5 class="white-text">Gigomy</h5>
+            <div class="fb-share-button" data-href="http://0.0.0.0:5000/" data-layout="button" data-size="small"><a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=http%3A%2F%2F0.0.0.0%3A5000%2F&amp;src=sdkpreparse" class="fb-xfbml-parse-ignore">Share</a></div>
+            <p class="grey-text text-lighten-4">Post/Take up jobs and help people!</p>
+          </div>
+        </div>
+      </div>
+      <div class="footer-copyright">
+        <div class="container">
+          &copy; 2020 Emily Ong Hui Qi |
+          A submission for <a href="https://www.codinglab.com.sg/ycgh2020/">Young Coders Global Hackathon</a></small>
+        </div>
+      </div>
+    </footer>
+
     <script type="text/javascript">
       $(document).ready(function(){
         $(".datepicker").datepicker();
@@ -51,18 +73,29 @@
         $(".collapsible").collapsible();
         $(".sidenav").sidenav();
         $(".tabs").tabs();
+        $(".flatpickr").flatpickr({
+          noCalendar: true,
+          enableTime: true,
+          dateFormat: "H:i",
+          time_24hr: true
+        });
+
         var socket = io();
         socket.on("connect", function () {
           socket.emit("connectUser");
         });
         socket.on("message", function (data) {
           M.toast({html: data["sender"] + " says: " + data["message"]});
+          var li = document.createElement("li");
+          li.setAttribute("class", "collection-item");
+          li.appendChild(document.createTextNode(data["sender"]+": "+data["message"]))
+          document.getElementById("allMessages").appendChild(li);
         });
         socket.on("notOnline", function (data) {
         });
       });
-      // $(".alert").alert();
-      // $(".clockpicker").clockpicker();
     </script>
+    <script async defer crossorigin="anonymous" src="https://connect.facebook.net/en_GB/sdk.js#xfbml=1&version=v6.0"></script>
+
   </body>
 </html>
