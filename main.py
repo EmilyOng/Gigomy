@@ -167,7 +167,7 @@ def chat (username=""):
     currentUser = getUser(current_user)
     if inChat:
         jobSender_ = User.query.filter_by(username = username).first()
-        if jobSender is None: return redirect(url_for("index"))
+        if jobSender_ is None:return redirect(url_for("index"))
         jobSender = getUser(jobSender_)
 
         # Get messages
@@ -190,6 +190,7 @@ def chat (username=""):
     # Get all contacts
     contacts = set()
     for message in messages:
+        print(message.msgSender, message.msgReceiver)
         if message.msgSender == current_user.username:
             contacts.add(message.msgReceiver)
         if message.msgReceiver == current_user.username:
@@ -357,4 +358,4 @@ def addJob ():
 
 if __name__ == "__main__":
     # db.create_all()
-    socketio.run(app, debug=True)
+    socketio.run(app, host="0.0.0.0", debug=True)
