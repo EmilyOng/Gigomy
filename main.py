@@ -167,6 +167,7 @@ def chat (username=""):
     currentUser = getUser(current_user)
     if inChat:
         jobSender_ = User.query.filter_by(username = username).first()
+        if jobSender is None: return redirect(url_for("index"))
         jobSender = getUser(jobSender_)
 
         # Get messages
