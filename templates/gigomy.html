@@ -2,4 +2,11 @@
 
 {% block content %}
   {% include "jobs.html" %}
+
+  {% if jobStatus_ %}
+    <script type="text/javascript">
+      {% include "js/jobStatus.js" %}
+    </script>
+  {% endif %}
+  
 {% endblock content %}

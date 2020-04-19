@@ -3,10 +3,18 @@ from flask_socketio import SocketIO, join_room, leave_room, send, emit
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import login_required, LoginManager, UserMixin, current_user, login_user, logout_user
 
+import flask_mail
+
 from werkzeug.security import generate_password_hash, check_password_hash
 
 import datetime
 import json
+
+import os
+from dotenv import load_dotenv
+
+project_folder = os.path.expanduser("~/Gigomy")
+load_dotenv(os.path.join(project_folder, ".env"))
 
 def getUser (user):
     currentUser = {"username": user.username,
@@ -61,6 +69,7 @@ def processJob (job):
             "jobDuration": jobDuration, "jobDurationRaw": jobDurationRaw}
     return job_
 
+
 def getJobDetails (data):
     title = data["title"]
     description = data["description"]
@@ -84,14 +93,44 @@ def getJobDetails (data):
     return job
 
 
+def getJobStatus (data):
+    jobStatus = {}
+    if data:
+        if "abandonedJob" in data:
+            data.pop("abandonedJob")
+            jobStatus["abandonedJob"] = 1
+        if "editedJob" in data:
+            data.pop("editedJob")
+            jobStatus["editedJob"] = 1
+        if "takenUpJob" in data:
+            data.pop("takenUpJob")
+            jobStatus["takenUpJob"] = 1
+        if "deletedJob" in data:
+            data.pop("deletedJob")
+            jobStatus["deletedJob"] = 1
+    return jobStatus
+
+
 CONNECTED_USERS = {}
 
 app = Flask(__name__)
-app.config["SECRET_KEY"] = "29034d2.3s2;q'435cy6"
+app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", default="secret")
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///Gigomy.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-socketio = SocketIO(app)
 
+mailSettings = {
+    "MAIL_SERVER": "smtp.gmail.com",
+    "MAIL_USE_TLS": False,
+    "MAIL_USE_SSL": True,
+    "MAIL_PORT": 465,
+    "MAIL_USERNAME": os.environ.get("MAIL_USERNAME"),
+    "MAIL_PASSWORD": os.environ.get("MAIL_PASSWORD")
+}
+
+app.config.update(mailSettings)
+mail = flask_mail.Mail(app)
+
+socketio = SocketIO(app)
 db = SQLAlchemy(app)
 
 login = LoginManager(app)
@@ -126,9 +165,10 @@ class Job(db.Model):
     jobReceiver = db.Column(db.String, db.ForeignKey("user.username"), nullable = True)
 
 
-@app.errorhandler(Exception)
-def handle_error(e):
-    return render_template("error.html")
+# @app.errorhandler(Exception)
+# def handle_error(e):
+#     db.session.rollback()
+#     return render_template("error.html")
 
 
 @login.user_loader
@@ -149,9 +189,12 @@ def index():
                 jobs.append(job_)
             else:
                 jobs.insert(0, job_)
+        jobStatus = getJobStatus(session)
+        print(jobStatus)
         return render_template("gigomy.html", jobs=jobs, currentUser=currentUser,
-                                currentUser_=json.dumps(currentUser))
+                                currentUser_=json.dumps(currentUser), jobStatus_=json.dumps(jobStatus))
     return render_template("index.html")
+
 
 @app.route("/errorHandling")
 def errorHandling():
@@ -161,6 +204,7 @@ def errorHandling():
         return render_template(page, msg=json.dumps(msg))
     except:
         return redirect(url_for("index"))
+
 
 @app.route("/login", methods=["POST"])
 def login():
@@ -287,6 +331,18 @@ def takeUpJob (jobID):
         return redirect(url_for("index"))
     job.jobReceiver = current_user.username
     db.session.commit()
+    session["takenUpJob"] = True
+    jobSender = User.query.filter_by(username = job.jobSender).one()
+    try:
+        msgReceiver = flask_mail.Message("Gigomy: You have taken up a job", sender="emilyohq11@gmail.com", recipients=[current_user.email])
+        msgReceiver.body = ("Greetings from Gigomy!\nThis email confirms that you have taken up a new job '{}' by {}.".format(
+                            job.jobTitle.rstrip(), job.jobSender.rstrip()))
+        mail.send(msgReceiver)
+        msgSender = flask_mail.Message("Gigomy: Your job has been taken up!", sender="emilyohq11@gmail.com", recipients=[jobSender.email])
+        msgSender.body = ("Greetings from Gigomy!\nThis email informs you that your job '{}' has been taken up by {}.".format(
+                        job.jobTitle.rstrip(), current_user.username.rstrip()))
+        mail.send(msgSender)
+    except:return redirect(url_for("see", id=jobID))
     return redirect(url_for("see", id=jobID))
 
 
@@ -309,6 +365,7 @@ def editJob (jobID):
     job.jobDateStart = job_["dateStart"]
     job.jobDateEnd = job_["dateEnd"]
     db.session.commit()
+    session["editedJob"] = True
     return redirect(url_for("see", id=jobID))
 
 
@@ -320,8 +377,39 @@ def abandonJob (jobID):
         return redirect(url_for("index"))
     job.jobReceiver = None
     db.session.commit()
+    session["abandonedJob"] = True
+    jobSender = User.query.filter_by(username = job.jobSender).one()
+    try:
+        msgReceiver = flask_mail.Message("Gigomy: You have abandoned a job", sender="emilyohq11@gmail.com", recipients=[current_user.email])
+        msgReceiver.body = ("Greetings from Gigomy!\nThis email confirms that you have abandoned the job '{}' by {}.".format(job.jobTitle.rstrip(), job.jobSender.rstrip()))
+        mail.send(msgReceiver)
+        msgSender = flask_mail.Message("Gigomy: Your job has been abandoned!", sender="emilyohq11@gmail.com", recipients=[jobSender.email])
+        msgSender.body = ("Greetings from Gigomy!\nThis email informs you that your job '{}' has been abandoned by {}.".format(job.jobTitle.rstrip(), current_user.username.rstrip()))
+        mail.send(msgSender)
+    except:return redirect(url_for("see", id=jobID))
     return redirect(url_for("see", id=jobID))
 
+
+@app.route ("/deleteJob/<jobID>")
+@login_required
+def deleteJob (jobID):
+    job = Job.query.filter_by(jobID = jobID).first()
+    if job is None:return redirect(url_for("index"))
+    db.session.delete(job)
+    db.session.commit()
+    session["deletedJob"] = True
+    try:
+        msgSender = flask_mail.Message("Gigomy: Your job has been deleted!", sender="emilyohq11@gmail.com", recipients=[current_user.username])
+        msgSender.body = ("Greetings from Gigomy!\nThis email confirms that your job '{}' has been deleted.".format(job.jobTitle.rstrip()))
+        mail.send(msgSender)
+
+        jobReceiver = User.query.filter_by(username = job.jobReceiver).one()
+        if jobReceiver:
+            msgReceiver = flask_mail.Message("Gigomy: Your job has been deleted!", sender="emilyohq11@gmail.com", recipients=[jobReceiver.email])
+            msgReceiver.body = ("Greetings from Gigomy!\nThis email informs you that your job '{}' has been deleted.".format(job.jobTitle.rstrip()))
+            mail.send(msgReceiver)
+    except:return redirect(url_for("index"))
+    return redirect(url_for("index"))
 
 @app.route ("/see/<id>")
 @login_required
@@ -330,6 +418,8 @@ def see (id):
     if job_ is None:
         return redirect(url_for("index"))
     else:
+        jobStatus = getJobStatus(session)
+
         job = processJob(job_)
         currentUser = getUser(current_user)
         jobSender_ = User.query.filter_by(username = job["jobSender"]).first()
@@ -337,7 +427,7 @@ def see (id):
         jobSender = getUser(jobSender_)
         # jobReceiver = getUser(jobReceiver_)
         return render_template("see.html", job=job, currentUser=currentUser,
-                                jobSender=jobSender)
+                                jobSender=jobSender, jobStatus_=json.dumps(jobStatus))
 
 
 @app.route("/signup", methods=["POST"])

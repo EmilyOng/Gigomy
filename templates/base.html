@@ -93,6 +93,10 @@
         });
         socket.on("notOnline", function (data) {
         });
+        socket.on("jobPosted", function (data) {
+          alert("hi")
+          M.toast({html: "A new job has been posted!"});
+        });
       });
     </script>
     <script async defer crossorigin="anonymous" src="https://connect.facebook.net/en_GB/sdk.js#xfbml=1&version=v6.0"></script>

@@ -83,7 +83,7 @@ sortPrice.onchange = function () {
   // SORT BY PRICE
   if (sortPrice.checked) {
     // Uncheck other fields except for hideTaken
-    for (var i = 0; i < buttons.length - 2; i ++) {
+    for (var i = 0; i < buttons.length - 1; i ++) {
       if (buttons[i] != sortPrice) {
         buttons[i].checked = false;
       }
@@ -114,7 +114,7 @@ sortDuration.onchange = function () {
   // SORT BY DURATION
   if (sortDuration.checked) {
     // Uncheck other fields except for hideTaken
-    for (var i = 0; i < buttons.length - 2; i ++) {
+    for (var i = 0; i < buttons.length - 1; i ++) {
       if (buttons[i] != sortDuration) {
         buttons[i].checked = false;
       }
@@ -143,7 +143,7 @@ sortPostedDate.onchange = function () {
   // SORT BY DATE POSTED
   if (sortPostedDate.checked) {
     // Uncheck other fields except for hideTaken
-    for (var i = 0; i < buttons.length - 2; i ++) {
+    for (var i = 0; i < buttons.length - 1; i ++) {
       if (buttons[i] != sortPostedDate) {
         buttons[i].checked = false;
       }

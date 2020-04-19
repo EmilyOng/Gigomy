@@ -13,9 +13,7 @@
     <!-- DESCRIPTION -->
     <div class="row">
       <div class="input-field">
-        <textarea id="description" name="description" class="materialize-textarea" required>
-          {% if type == "value" %}{{description}}{% endif %}
-        </textarea>
+        <textarea id="description" name="description" class="materialize-textarea" required>{% if type == "value" %}{{description}}{% endif %}</textarea>
         <label for="description">Description</label>
       </div>
     </div>

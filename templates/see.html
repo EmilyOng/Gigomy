@@ -30,6 +30,9 @@
           <p><a href="mailto:{{jobSender['email']}}?subject=Gigomy">{{jobSender["email"]}}</a></p>
         </li>
       </ul>
+      <p>
+        The payment methods are to be settled between users; Gigomy bears no responsibility for any incidents that occur.
+      </p>
     </div>
 
     <div class="card-action">
@@ -42,7 +45,7 @@
       {% endif %}
 
       {% if jobSender["username"] == currentUser["username"] %}
-        <a class="btn-floating halfway-fab waves-effect waves-light btn modal-trigger red" href="#editJob"><i class="material-icons">edit</i></a>
+        <a class="btn-floating waves-effect waves-light btn modal-trigger red" href="#editJob"><i class="material-icons">edit</i></a>
         <div id="editJob" class="modal">
           {% import "forms/setJob.html" as setJobForm %}
           {% set dateStart, timeStart = (job["jobDateStart"]|string).split(" ") %}
@@ -52,11 +55,27 @@
           {% set action = "editJob/" + (job['jobID']|string) %}
           {{setJobForm.setJob(heading="Edit your job", action=action, id="editJobForm", name="editJob", type="value", title=job["jobTitle"], description=job["jobDescription"], location=job["jobLocation"], price=price, dateStart=dateStart|replace("/", "-", 3), timeStart=timeStart, dateEnd=dateEnd|replace("/", "-", 3), timeEnd=timeEnd)}}
         </div>
+        <a class="btn-floating waves-effect waves-light btn modal-trigger red" href="#deleteJob"><i class="material-icons">delete</i></a>
+        <div id="deleteJob" class="modal">
+          <div class="modal-content">
+            <p>Do you really want to delete the job?</p>
+          </div>
+          <div class="modal-footer">
+            <a class="modal-close waves-effect waves-green btn-flat green white-text">No</a>
+            <a href="{{url_for('deleteJob', jobID=job['jobID'])}}" class="modal-close waves-effect waves-green red white-text btn-flat">Yes</a>
+          </div>
+        </div>
       {% endif %}
     </div>
   </div>
   <br/><br/>
   <a href="/"><button type="button" class="btn btn-light">Back</button></a>
+
+  {% if jobStatus_ %}
+    <script type="text/javascript">
+      {% include "js/jobStatus.js" %}
+    </script>
+  {% endif %}
 
   <script type="text/javascript">
     var editJobForm = document.getElementById("editJobForm");
