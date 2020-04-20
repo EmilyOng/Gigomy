@@ -10,53 +10,53 @@
 {% if contacts %}
   <h5>Continue your chats...</h5>
 {% endif %}
-  <ul class="collection">
-    {% if contacts %}
-      {% for contact in contacts %}
-        <li class="collection-item avatar">
-          <i class="material-icons circle">account_circle</i>
-          <a href="{{url_for('chat', username=contact)}}"><span class="title">{{contact}}</span></a>
-        </li>
+<ul class="collection" id="contacts_">
+  {% if contacts %}
+    {% for contact in contacts %}
+      <li class="collection-item avatar" data-item-name={{contact}}>
+        <i class="material-icons circle">account_circle</i>
+        <a href="{{url_for('chat', username=contact)}}"><span class="title">{{contact}}</span></a>
+      </li>
+    {% endfor %}
+  {% else %}
+    <li class="collection-item" data-item-name="">No contacts yet...</li>
+  {% endif %}
+</ul>
+{% if inChat %}
+  <ul class="collection with-header" id="allMessages">
+    <li class="collection-header"><h4>Chatting with {{jobSender["username"]}}</h4></li>
+    {% if messages %}
+      {% for message in messages %}
+        <li class="collection-item">{{message[1]["msgSender"]}} ({{message[0]}}) : {{message[1]["msgText"]}}</li>
       {% endfor %}
     {% else %}
-      <li class="collection-item">No contacts yet...</li>
+      {% if jobSender["username"] != currentUser["username"] %}
+        <li class="collection-item" data-item-empty="true">No messages yet...</li>
+      {% else %}
+        <li class="collection-item" data-item-empty="true">You cannot chat with yourself...</li>
+      {% endif %}
     {% endif %}
   </ul>
-  {% if inChat %}
-    <ul class="collection with-header" id="allMessages">
-      <li class="collection-header"><h4>Chatting with {{jobSender["username"]}}</h4></li>
-      {% if messages %}
-        {% for message in messages %}
-          <li class="collection-item">{{message["msgSender"]}}: {{message["msgText"]}}</li>
-        {% endfor %}
-      {% else %}
-        {% if jobSender["username"] != currentUser["username"] %}
-          <li class="collection-item">No messages yet...</li>
-        {% else %}
-          <li class="collection-item">You cannot chat with yourself...</li>
-        {% endif %}
-      {% endif %}
-    </ul>
 
-    {% if jobSender["username"] != currentUser["username"] %}
-      <form method="POST" id="sendMessageForm">
-          <div class="row">
-            <div class="input-field col s10">
-              <input placeholder="Type something..." id="message" name="message" type="text" class="validate">
-            </div>
-            <div class="input-field col s2">
-              <button class="btn waves-effect waves-light" type="submit" name="sendMessage">
-                <i class="material-icons right">send</i>
-              </button>
-            </div>
+  {% if jobSender["username"] != currentUser["username"] %}
+    <form method="POST" id="sendMessageForm">
+        <div class="row">
+          <div class="input-field col s10">
+            <input placeholder="Type something..." id="message" name="message" type="text" class="validate" autocomplete="off">
           </div>
-        </form>
-    {% endif %}
+          <div class="input-field col s2">
+            <button class="btn waves-effect waves-light" type="submit" name="sendMessage">
+              <i class="material-icons right">send</i>
+            </button>
+          </div>
+        </div>
+      </form>
   {% endif %}
+{% endif %}
 
   {% if inChat %}
     <script type="text/javascript">
-      var socket = io();
+      var socket = io.connect();
       var sendMessageForm = document.getElementById("sendMessageForm");
       sendMessageForm.onsubmit = function () {
         event.preventDefault();
@@ -69,8 +69,52 @@
 
         var li = document.createElement("li");
         li.setAttribute("class", "collection-item");
-        li.appendChild(document.createTextNode(currentUser["username"]+": "+message))
+        var date_ = new Date();
+        var day = date_.getDate();
+        var month = date_.getMonth() + 1;
+        var year = date_.getFullYear();
+
+        var date = day + "/" + month + "/" + year;
+        var time = date_.getHours() + ":" + date_.getMinutes() + ":" + date_.getSeconds();
+
+        li.appendChild(document.createTextNode(currentUser["username"]+ "(" + date + " " + time + "): " + message));
+        
+        var allMessages = document.getElementById("allMessages").children;
+        for (var i = 0; i < allMessages.length; i ++) {
+          if (allMessages[i].hasAttribute("data-item-empty")) {
+            allMessages[i].parentNode.removeChild(allMessages[i]);
+          }
+        }
         document.getElementById("allMessages").appendChild(li);
+
+        var contacts = document.getElementById("contacts_").children;
+        var exists = false;
+        for (var i = 0; i < contacts.length; i ++) {
+          if (contacts[i].getAttribute("data-item-name") == receiver) {
+            exists = true; break;
+          }
+          else if (contacts[i].getAttribute("data-item-name") == "") {
+            contacts[i].parentNode.removeChild(contacts[i]);
+            break;
+          }
+        }
+        if (!exists) {
+          var li = document.createElement("li");
+          li.setAttribute("class", "collection-item avatar");
+          li.setAttribute("data-item-name", receiver);
+          var icon = document.createElement("i");
+          icon.setAttribute("class", "material-icons circle");
+          icon.appendChild(document.createTextNode("account_circle"));
+          li.appendChild(icon);
+          var a = document.createElement("a");
+          a.setAttribute("href", "{{url_for('chat', username='" + receiver + "')}}");
+          var span = document.createElement("span");
+          span.setAttribute("class", "title");
+          span.appendChild(document.createTextNode(receiver));
+          a.appendChild(span);
+          li.appendChild(a);
+          document.getElementById("contacts_").appendChild(li);
+        }
         document.getElementById("message").value = "";
       };
     </script>

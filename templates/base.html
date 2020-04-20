@@ -30,21 +30,21 @@
         <a href="/" class="brand-logo">&nbsp;Gigomy</a>
         <a href="/" data-target="mobile-demo" class="sidenav-trigger"><i class="material-icons">menu</i></a>
         <ul class="right hide-on-med-and-down">
-          <li><a href="/about">About</a></li>
-          <li><a href="/overview">Dashboard</a></li>
-          <li><a href="/">Jobs</a></li>
-          <li><a href="/chat">Chat</a></li>
-          <li><a href="/logout">Logout</a></li>
+          <li><a href="{{url_for('about', _scheme='https', _external=True)}}">About</a></li>
+          <li><a href="{{url_for('overview', _scheme='https', _external=True)}}">Dashboard</a></li>
+          <li><a href="{{url_for('index', _scheme='https', _external=True)}}">Jobs</a></li>
+          <li><a href="{{url_for('chat', _scheme='https', _external=True)}}">Chat</a></li>
+          <li><a href="{{url_for('logout', _scheme='https', _external=True)}}">Logout</a></li>
         </ul>
       </div>
     </nav>
 
     <ul class="sidenav" id="mobile-demo">
-      <li><a href="/about">About</a></li>
-      <li><a href="/overview">Dashboard</a></li>
-      <li><a href="/">Jobs</a></li>
-      <li><a href="/chat">Chat</a></li>
-      <li><a href="/logout">Logout</a></li>
+      <li><a href="{{url_for('about', _scheme='https', _external=True)}}">About</a></li>
+          <li><a href="{{url_for('overview', _scheme='https', _external=True)}}">Dashboard</a></li>
+          <li><a href="{{url_for('index', _scheme='https', _external=True)}}">Jobs</a></li>
+          <li><a href="{{url_for('chat', _scheme='https', _external=True)}}">Chat</a></li>
+          <li><a href="{{url_for('logout', _scheme='https', _external=True)}}">Logout</a></li>
     </ul>
 
     <main>
@@ -87,7 +87,6 @@
           dateFormat: "H:i",
           time_24hr: true
         });
-
         var socket = io();
         socket.on("connect", function () {
           socket.emit("connectUser");
@@ -96,15 +95,50 @@
           M.toast({html: data["sender"] + " says: " + data["message"]});
           var li = document.createElement("li");
           li.setAttribute("class", "collection-item");
-          li.appendChild(document.createTextNode(data["sender"]+": "+data["message"]))
+          li.appendChild(document.createTextNode(data["sender"]+ "(" + data["datePosted"] + "): " + data["message"]));
+          var allMessages = document.getElementById("allMessages").children;
+          for (var i = 0; i < allMessages.length; i ++) {
+            if (allMessages[i].hasAttribute("data-item-empty")) {
+              allMessages[i].parentNode.removeChild(allMessages[i]);
+            }
+          }
           document.getElementById("allMessages").appendChild(li);
+
+          var contacts = document.getElementById("contacts_").children;
+          var exists = false;
+          for (var i = 0; i < contacts.length; i ++) {
+            if (contacts[i].getAttribute("data-item-name") == data["sender"]) {
+              exists = true; break;
+            }
+            else if (contacts[i].getAttribute("data-item-name") == "") {
+            contacts[i].parentNode.removeChild(contacts[i]);
+            break;
+          }
+          }
+          if (!exists) {
+            var li = document.createElement("li");
+            li.setAttribute("class", "collection-item avatar");
+            li.setAttribute("data-item-name", data["sender"]);
+            var icon = document.createElement("i");
+            icon.setAttribute("class", "material-icons circle");
+            icon.appendChild(document.createTextNode("account_circle"));
+            li.appendChild(icon);
+            var a = document.createElement("a");
+            a.setAttribute("href", "{{url_for('chat', username='" + data["sender"] + "')}}");
+            var span = document.createElement("span");
+            span.setAttribute("class", "title");
+            span.appendChild(document.createTextNode(data["sender"]));
+            a.appendChild(span);
+            li.appendChild(a);
+            document.getElementById("contacts_").appendChild(li);
+          }
+          
         });
         socket.on("notOnline", function (data) {
         });
-        socket.on("jobPosted", function (data) {
-          alert("hi")
-          M.toast({html: "A new job has been posted!"});
-        });
+        // socket.on("jobPosted", function (data) {
+        //   M.toast({html: "A new job has been posted!"});
+        // });
       });
     </script>
     <script async defer crossorigin="anonymous" src="https://connect.facebook.net/en_GB/sdk.js#xfbml=1&version=v6.0"></script>

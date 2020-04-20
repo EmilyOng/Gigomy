@@ -1,7 +1,7 @@
 var jobStatus = JSON.parse({{jobStatus_|tojson}});
 for (var status in jobStatus) {
   if (jobStatus[status]) {
-    if (status == "abandonJob") {
+    if (status == "abandonedJob") {
       M.toast({html: "You have abandoned the job!"});
     }
     else if (status == "editedJob") {

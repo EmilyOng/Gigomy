@@ -35,7 +35,7 @@
               <span class="title"><strong>{{job["jobTitle"]}}</strong></span>
             </a>
             <span class="new badge" data-badge-caption='{{job["jobDatePosted"]}}'></span>
-            {% if not job["jobReceiver"] %}
+            {% if job["jobReceiver"] %}
               <span class="red new badge" data-badge-caption="Already taken!"></span>
             {% else %}
               <span class="new badge" data-badge-caption="Not yet taken!"></span>

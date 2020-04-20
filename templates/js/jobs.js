@@ -8,9 +8,10 @@ var hideTaken = document.getElementById("hideTaken");
 var jobNodes = document.getElementById("allJobs").children;
 
 var currentUser = JSON.parse({{currentUser_|tojson}});
-sortPostedDate.checked = true;
+// sortPostedDate.checked = true;
 var buttons = ["sortPrice", "sortDuration", "sortPostedDate", "postedByMe", "showMyJobs", "sortReverse", "hideTaken"];
 
+sortPostedDate_();
 
 function revert () {
   for (var i = 0; i < buttons.length; i ++) { document.getElementById(buttons[i]).checked = false; }
@@ -57,6 +58,8 @@ function postedByMe_ () {
         jobNodes[i].setAttribute("data-item-hidden", "false");
       }
     }
+    document.getElementById("sortPostedDate").checked = true;
+    revert();
   }
 }
 
@@ -87,6 +90,8 @@ function showMyJobs_ () {
         jobNodes[i].setAttribute("data-item-hidden", "false");
       }
     }
+    document.getElementById("sortPostedDate").checked = true;
+    revert();
   }
 }
 
@@ -119,6 +124,8 @@ function hideTaken_ () {
         jobNodes[i].setAttribute("data-item-hidden", "false");
       }
     }
+    document.getElementById("sortPostedDate").checked = true;
+    revert();
   }
 }
 

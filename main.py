@@ -5,9 +5,12 @@ from flask_login import login_required, LoginManager, UserMixin, current_user, l
 
 import flask_mail
 
+# import eventlet
+
 from werkzeug.security import generate_password_hash, check_password_hash
 
 import datetime
+import pytz
 import json
 
 import os
@@ -29,6 +32,10 @@ def processJob (job):
     jobLocation = job.jobLocation
     jobPrice = "${:,.2f}".format(job.jobPrice)
     jobDatePosted_ = job.jobDatePosted
+
+    sg =pytz.timezone("Asia/Singapore")
+    jobDatePosted_ = jobDatePosted_.astimezone(sg)
+
     jobDatePosted = (jobDatePosted_.strftime("%Y-%m-%d %H:%M:%S"))
 
     jobDateStart = job.jobDateStart
@@ -36,7 +43,10 @@ def processJob (job):
     jobSender = job.jobSender
     jobReceiver = job.jobReceiver
     jobDuration_ = jobDateEnd - jobDateStart
-    jobDurationRaw = jobDuration_.total_seconds()
+    if jobDateEnd == jobDateStart:
+      jobDurationRaw = 0
+    else:
+      jobDurationRaw = jobDuration_.total_seconds()
 
     jobDuration_ = str(jobDuration_).split(",")
     if len(jobDuration_) == 1:
@@ -130,7 +140,7 @@ mailSettings = {
 app.config.update(mailSettings)
 mail = flask_mail.Mail(app)
 
-socketio = SocketIO(app)
+socketio = SocketIO(app, cors_allowed_origins="*")
 db = SQLAlchemy(app)
 
 login = LoginManager(app)
@@ -165,10 +175,10 @@ class Job(db.Model):
     jobReceiver = db.Column(db.String, db.ForeignKey("user.username"), nullable = True)
 
 
-@app.errorhandler(Exception)
-def handle_error(e):
-    db.session.rollback()
-    return render_template("error.html")
+# @app.errorhandler(Exception)
+# def handle_error(e):
+#     db.session.rollback()
+#     return render_template("error.html")
 
 
 @login.user_loader
@@ -257,14 +267,18 @@ def chat (username=""):
     for message in messagesReceived:messages_.append((message.msgDateTime, message))
     messages = []
     messages_.sort()
-    for message in messages_:messages.append(message[1])
+    for message in messages_:
+      sg =pytz.timezone("Asia/Singapore")
+      datePosted = message[0].astimezone(sg)
+      datePosted = datePosted.strftime("%Y-%m-%d %H:%M:%S")
+      messages.append([datePosted, message[1]])
     # Get all contacts
     contacts = set()
     for message in messages:
-        if message.msgSender == current_user.username:
-            contacts.add(message.msgReceiver)
-        if message.msgReceiver == current_user.username:
-            contacts.add(message.msgSender)
+        if message[1].msgSender == current_user.username:
+            contacts.add(message[1].msgReceiver)
+        if message[1].msgReceiver == current_user.username:
+            contacts.add(message[1].msgSender)
 
     contacts = list(contacts)
     return render_template("chat.html", currentUser=currentUser, jobSender=jobSender, jobSender_=json.dumps(jobSender),
@@ -284,8 +298,12 @@ def receivedData (data):
     db.session.add(msg)
     db.session.commit()
 
-    data["datePosted"] = str(datePosted)
+    sg =pytz.timezone("Asia/Singapore")
+    datePosted = datePosted.astimezone(sg)
+    
+    data["datePosted"] = (datePosted.strftime("%Y-%m-%d %H:%M:%S"))
     data["sender"] = sender
+
     if receiver not in CONNECTED_USERS:
         emit("notOnline", "{} is not online!".format(receiver), room=CONNECTED_USERS[sender])
     else:
@@ -342,7 +360,8 @@ def takeUpJob (jobID):
         msgSender.body = ("Greetings from Gigomy!\nThis email informs you that your job '{}' has been taken up by {}.".format(
                         job.jobTitle.rstrip(), current_user.username.rstrip()))
         mail.send(msgSender)
-    except:return redirect(url_for("see", id=jobID, _scheme="https", _external=True))
+    except:
+      return redirect(url_for("see", id=jobID, _scheme="https", _external=True))
     return redirect(url_for("see", id=jobID, _scheme="https", _external=True))
 
 
@@ -380,13 +399,14 @@ def abandonJob (jobID):
     session["abandonedJob"] = True
     jobSender = User.query.filter_by(username = job.jobSender).one()
     try:
-        msgReceiver = flask_mail.Message("Gigomy: You have abandoned a job", sender="emilyohq11@gmail.com", recipients=[current_user.email])
-        msgReceiver.body = ("Greetings from Gigomy!\nThis email confirms that you have abandoned the job '{}' by {}.".format(job.jobTitle.rstrip(), job.jobSender.rstrip()))
-        mail.send(msgReceiver)
-        msgSender = flask_mail.Message("Gigomy: Your job has been abandoned!", sender="emilyohq11@gmail.com", recipients=[jobSender.email])
-        msgSender.body = ("Greetings from Gigomy!\nThis email informs you that your job '{}' has been abandoned by {}.".format(job.jobTitle.rstrip(), current_user.username.rstrip()))
-        mail.send(msgSender)
-    except:return redirect(url_for("see", id=jobID, _scheme="https", _external=True))
+      msgReceiver = flask_mail.Message("Gigomy: You have abandoned a job", sender="emilyohq11@gmail.com", recipients=[current_user.email])
+      msgReceiver.body = ("Greetings from Gigomy!\nThis email confirms that you have abandoned the job '{}' by {}.".format(job.jobTitle.rstrip(), job.jobSender.rstrip()))
+      mail.send(msgReceiver)
+      msgSender = flask_mail.Message("Gigomy: Your job has been abandoned!", sender="emilyohq11@gmail.com", recipients=[jobSender.email])
+      msgSender.body = ("Greetings from Gigomy!\nThis email informs you that your job '{}' has been abandoned by {}.".format(job.jobTitle.rstrip(), current_user.username.rstrip()))
+      mail.send(msgSender)
+    except:
+      return redirect(url_for("see", id=jobID, _scheme="https", _external=True))
     return redirect(url_for("see", id=jobID, _scheme="https", _external=True))
 
 
@@ -395,20 +415,22 @@ def abandonJob (jobID):
 def deleteJob (jobID):
     job = Job.query.filter_by(jobID = jobID).first()
     if job is None:return redirect(url_for("index", _scheme="https", _external=True))
+    jobReceiver_ = job.jobReceiver
     db.session.delete(job)
     db.session.commit()
     session["deletedJob"] = True
     try:
-        msgSender = flask_mail.Message("Gigomy: Your job has been deleted!", sender="emilyohq11@gmail.com", recipients=[current_user.username])
-        msgSender.body = ("Greetings from Gigomy!\nThis email confirms that your job '{}' has been deleted.".format(job.jobTitle.rstrip()))
-        mail.send(msgSender)
+      msgSender = flask_mail.Message("Gigomy: Your job has been deleted!", sender="emilyohq11@gmail.com", recipients=[current_user.email])
+      msgSender.body = ("Greetings from Gigomy!\nThis email confirms that your job '{}' has been deleted.".format(job.jobTitle.rstrip()))
+      mail.send(msgSender)
 
-        jobReceiver = User.query.filter_by(username = job.jobReceiver).one()
-        if jobReceiver:
-            msgReceiver = flask_mail.Message("Gigomy: Your job has been deleted!", sender="emilyohq11@gmail.com", recipients=[jobReceiver.email])
-            msgReceiver.body = ("Greetings from Gigomy!\nThis email informs you that your job '{}' has been deleted.".format(job.jobTitle.rstrip()))
-            mail.send(msgReceiver)
-    except:return redirect(url_for("index", _scheme="https", _external=True))
+      jobReceiver = User.query.filter_by(username = jobReceiver_).one()
+      if jobReceiver:
+          msgReceiver = flask_mail.Message("Gigomy: Your job has been deleted!", sender="emilyohq11@gmail.com", recipients=[jobReceiver.email])
+          msgReceiver.body = ("Greetings from Gigomy!\nThis email informs you that your job '{}' has been deleted.".format(job.jobTitle.rstrip()))
+          mail.send(msgReceiver)
+    except:
+      return redirect(url_for("index", _scheme="https", _external=True))
     return redirect(url_for("index", _scheme="https", _external=True))
 
 @app.route ("/see/<id>")
@@ -419,7 +441,7 @@ def see (id):
         return redirect(url_for("index", _scheme="https", _external=True))
     else:
         jobStatus = getJobStatus(session)
-
+        # print(jobStatus)
         job = processJob(job_)
         currentUser = getUser(current_user)
         jobSender_ = User.query.filter_by(username = job["jobSender"]).first()
@@ -433,7 +455,7 @@ def see (id):
 @app.route("/signup", methods=["POST"])
 def signup():
     if not request.form: return redirect(url_for("index", _scheme="https", _external=True))
-    if "signup" not in request.form: return redirect(url_for("index", _scheme="https", _external=True))
+    if "signup" not in request.form: return redirect(url_for("index", __external=True))
 
     email = request.form["email"]
     username = request.form["username"]
@@ -459,7 +481,7 @@ def signup():
 
 @app.route("/logout")
 def logout ():
-    if not current_user.is_authenticated:return redirect(url_for("index"))
+    if not current_user.is_authenticated:return redirect(url_for("index", _scheme="https", _external=True))
     session.clear()
     CONNECTED_USERS.pop(current_user.username)
     logout_user()
@@ -469,7 +491,7 @@ def logout ():
 @app.route("/addJob", methods=["POST"])
 @login_required
 def addJob ():
-    if not request.form: return redirect(url_for("index"))
+    if not request.form: return redirect(url_for("index", _scheme="https", _external=True))
     # if "addJob" not in request.form: return redirect(url_for("index"))
     job_ = getJobDetails(request.form)
     jobSender = current_user.username
@@ -484,4 +506,4 @@ def addJob ():
 
 if __name__ == "__main__":
     # db.create_all()
-    socketio.run(app, host="0.0.0.0", debug=True)
+    socketio.run(app, host="0.0.0.0")
