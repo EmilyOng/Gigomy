@@ -1,11 +1,9 @@
 from flask import Flask, render_template, redirect, url_for, request, session
-from flask_socketio import SocketIO, join_room, leave_room, send, emit
+from flask_socketio import SocketIO, send, emit
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import login_required, LoginManager, UserMixin, current_user, login_user, logout_user
 
 import flask_mail
-
-# import eventlet
 
 from werkzeug.security import generate_password_hash, check_password_hash
 
@@ -175,10 +173,10 @@ class Job(db.Model):
     jobReceiver = db.Column(db.String, db.ForeignKey("user.username"), nullable = True)
 
 
-# @app.errorhandler(Exception)
-# def handle_error(e):
-#     db.session.rollback()
-#     return render_template("error.html")
+@app.errorhandler(Exception)
+def handle_error(e):
+    db.session.rollback()
+    return render_template("error.html")
 
 
 @login.user_loader
