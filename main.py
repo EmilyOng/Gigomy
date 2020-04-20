@@ -165,10 +165,10 @@ class Job(db.Model):
     jobReceiver = db.Column(db.String, db.ForeignKey("user.username"), nullable = True)
 
 
-# @app.errorhandler(Exception)
-# def handle_error(e):
-#     db.session.rollback()
-#     return render_template("error.html")
+@app.errorhandler(Exception)
+def handle_error(e):
+    db.session.rollback()
+    return render_template("error.html")
 
 
 @login.user_loader
@@ -190,7 +190,7 @@ def index():
             else:
                 jobs.insert(0, job_)
         jobStatus = getJobStatus(session)
-        print(jobStatus)
+        # print(jobStatus)
         return render_template("gigomy.html", jobs=jobs, currentUser=currentUser,
                                 currentUser_=json.dumps(currentUser), jobStatus_=json.dumps(jobStatus))
     return render_template("index.html")
@@ -203,13 +203,13 @@ def errorHandling():
         msg = session["error"]["msg"]
         return render_template(page, msg=json.dumps(msg))
     except:
-        return redirect(url_for("index"))
+        return redirect(url_for("index", _scheme="https", _external=True))
 
 
 @app.route("/login", methods=["POST"])
 def login():
-    if not request.form: return redirect(url_for("index"))
-    if "login" not in request.form: return redirect(url_for("index"))
+    if not request.form: return redirect(url_for("index", _scheme="https", _external=True))
+    if "login" not in request.form: return redirect(url_for("index", _scheme="https", _external=True))
 
     # Get input fields
     email = request.form["email"]
@@ -219,16 +219,16 @@ def login():
     if user is None:
         # Email does not exist
         session["error"] = {"page": "index.html", "msg": "Email does not exist!"}
-        return redirect(url_for("errorHandling"))
+        return redirect(url_for("errorHandling", _scheme="https", _external=True))
     else:
         # Check password
         if check_password_hash(user.password, password):
             login_user(user)
-            return redirect(url_for("index"))
+            return redirect(url_for("index", _scheme="https", _external=True))
         else:
             # Password is wrong
             session["error"] = {"page": "index.html", "msg": "Passwords do not match!"}
-            return redirect(url_for("errorHandling"))
+            return redirect(url_for("errorHandling", _scheme="https", _external=True))
 
 
 @app.route ("/chat/<username>", methods=["GET", "POST"])
@@ -239,7 +239,7 @@ def chat (username=""):
     currentUser = getUser(current_user)
     if inChat:
         jobSender_ = User.query.filter_by(username = username).first()
-        if jobSender_ is None:return redirect(url_for("index"))
+        if jobSender_ is None:return redirect(url_for("index", _scheme="https", _external=True))
         jobSender = getUser(jobSender_)
 
         # Get messages
@@ -277,7 +277,7 @@ def receivedData (data):
     message = data["message"]
     sender = current_user.username
     datePosted = datetime.datetime.now()
-    print(CONNECTED_USERS, receiver)
+    # print(CONNECTED_USERS, receiver)
 
     # Add to database
     msg = Message(msgText = message, msgDateTime = datePosted, msgSender = sender, msgReceiver = receiver)
@@ -289,16 +289,16 @@ def receivedData (data):
     if receiver not in CONNECTED_USERS:
         emit("notOnline", "{} is not online!".format(receiver), room=CONNECTED_USERS[sender])
     else:
-        print("sending to {}".format(receiver))
+        # print("sending to {}".format(receiver))
         emit("message", data, room=CONNECTED_USERS[receiver])
-        print("ok")
+        # print("ok")
 
 
 @socketio.on("connectUser")
 def connectUser ():
     if current_user.is_authenticated:
         CONNECTED_USERS[current_user.username] = request.sid
-        print("{} connected!".format(current_user.username))
+        # print("{} connected!".format(current_user.username))
 
 
 @app.route("/overview")
@@ -328,7 +328,7 @@ def about ():
 def takeUpJob (jobID):
     job = Job.query.filter_by(jobID = jobID).first()
     if job is None:
-        return redirect(url_for("index"))
+        return redirect(url_for("index", _scheme="https", _external=True))
     job.jobReceiver = current_user.username
     db.session.commit()
     session["takenUpJob"] = True
@@ -342,18 +342,18 @@ def takeUpJob (jobID):
         msgSender.body = ("Greetings from Gigomy!\nThis email informs you that your job '{}' has been taken up by {}.".format(
                         job.jobTitle.rstrip(), current_user.username.rstrip()))
         mail.send(msgSender)
-    except:return redirect(url_for("see", id=jobID))
-    return redirect(url_for("see", id=jobID))
+    except:return redirect(url_for("see", id=jobID, _scheme="https", _external=True))
+    return redirect(url_for("see", id=jobID, _scheme="https", _external=True))
 
 
 @app.route("/editJob/<jobID>", methods=["POST"])
 @login_required
 def editJob (jobID):
-    if not request.form:return redirect(url_for("index"))
+    if not request.form:return redirect(url_for("index", _scheme="https", _external=True))
     # if "editJob" not in request.form:return redirect(url_for("index"))
     job = Job.query.filter_by(jobID = int(jobID)).first()
     if job is None or job.jobSender != current_user.username:
-        return redirect(url_for("index"))
+        return redirect(url_for("index", _scheme="https", _external=True))
 
     job_ = getJobDetails(request.form)
     # jobSender = current_user.username
@@ -366,7 +366,7 @@ def editJob (jobID):
     job.jobDateEnd = job_["dateEnd"]
     db.session.commit()
     session["editedJob"] = True
-    return redirect(url_for("see", id=jobID))
+    return redirect(url_for("see", id=jobID, _scheme="https", _external=True))
 
 
 @app.route("/abandonJob/<jobID>")
@@ -374,7 +374,7 @@ def editJob (jobID):
 def abandonJob (jobID):
     job = Job.query.filter_by(jobID = jobID).first()
     if job is None or job.jobReceiver != current_user.username:
-        return redirect(url_for("index"))
+        return redirect(url_for("index", _scheme="https", _external=True))
     job.jobReceiver = None
     db.session.commit()
     session["abandonedJob"] = True
@@ -386,15 +386,15 @@ def abandonJob (jobID):
         msgSender = flask_mail.Message("Gigomy: Your job has been abandoned!", sender="emilyohq11@gmail.com", recipients=[jobSender.email])
         msgSender.body = ("Greetings from Gigomy!\nThis email informs you that your job '{}' has been abandoned by {}.".format(job.jobTitle.rstrip(), current_user.username.rstrip()))
         mail.send(msgSender)
-    except:return redirect(url_for("see", id=jobID))
-    return redirect(url_for("see", id=jobID))
+    except:return redirect(url_for("see", id=jobID, _scheme="https", _external=True))
+    return redirect(url_for("see", id=jobID, _scheme="https", _external=True))
 
 
 @app.route ("/deleteJob/<jobID>")
 @login_required
 def deleteJob (jobID):
     job = Job.query.filter_by(jobID = jobID).first()
-    if job is None:return redirect(url_for("index"))
+    if job is None:return redirect(url_for("index", _scheme="https", _external=True))
     db.session.delete(job)
     db.session.commit()
     session["deletedJob"] = True
@@ -408,15 +408,15 @@ def deleteJob (jobID):
             msgReceiver = flask_mail.Message("Gigomy: Your job has been deleted!", sender="emilyohq11@gmail.com", recipients=[jobReceiver.email])
             msgReceiver.body = ("Greetings from Gigomy!\nThis email informs you that your job '{}' has been deleted.".format(job.jobTitle.rstrip()))
             mail.send(msgReceiver)
-    except:return redirect(url_for("index"))
-    return redirect(url_for("index"))
+    except:return redirect(url_for("index", _scheme="https", _external=True))
+    return redirect(url_for("index", _scheme="https", _external=True))
 
 @app.route ("/see/<id>")
 @login_required
 def see (id):
     job_ = Job.query.filter_by(jobID = id).first()
     if job_ is None:
-        return redirect(url_for("index"))
+        return redirect(url_for("index", _scheme="https", _external=True))
     else:
         jobStatus = getJobStatus(session)
 
@@ -432,8 +432,8 @@ def see (id):
 
 @app.route("/signup", methods=["POST"])
 def signup():
-    if not request.form: return redirect(url_for("index"))
-    if "signup" not in request.form: return redirect(url_for("index"))
+    if not request.form: return redirect(url_for("index", _scheme="https", _external=True))
+    if "signup" not in request.form: return redirect(url_for("index", _scheme="https", _external=True))
 
     email = request.form["email"]
     username = request.form["username"]
@@ -442,28 +442,28 @@ def signup():
     if password != confirmPassword:
         #Passwords do not match
         session["error"] = {"page": "index.html", "msg": "Passwords do not match!"}
-        return redirect(url_for("errorHandling"))
+        return redirect(url_for("errorHandling", _scheme="https", _external=True))
 
     # Check if username or email already exists
     if User.query.filter_by(username = username).first() or User.query.filter_by(email = email).first():
         session["error"] = {"page": "index.html", "msg": "Username or email already exists!"}
-        return redirect(url_for("errorHandling"))
+        return redirect(url_for("errorHandling", _scheme="https", _external=True))
 
     passwordHash = generate_password_hash(password, "sha256")
     user = User(username = username, email = email, password = passwordHash, avatar = "")
     db.session.add(user)
     db.session.commit()
     login_user(user)
-    return redirect(url_for("index"))
+    return redirect(url_for("index", _scheme="https", _external=True))
 
 
 @app.route("/logout")
-@login_required
 def logout ():
+    if not current_user.is_authenticated:return redirect(url_for("index"))
     session.clear()
     CONNECTED_USERS.pop(current_user.username)
     logout_user()
-    return redirect(url_for("index"))
+    return redirect(url_for("index", _scheme="https", _external=True))
 
 
 @app.route("/addJob", methods=["POST"])
@@ -479,7 +479,7 @@ def addJob ():
 
     db.session.add(job)
     db.session.commit()
-    return redirect(url_for("index"))
+    return redirect(url_for("index", _scheme="https", _external=True))
 
 
 if __name__ == "__main__":

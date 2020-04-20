@@ -93,6 +93,12 @@
   var addJobForm = document.getElementById("addJobForm");
   addJobForm.onsubmit = function () {
     event.preventDefault();
+    if (document.getElementById("timeStart").value == "") {
+        document.getElementById("timeStart").value = "00:00";
+    }
+    if (document.getElementById("timeEnd").value == "") {
+        document.getElementById("timeEnd").value = "00:00";
+    }
     var dateStart = new Date(document.getElementById("dateStart").value + "T" + document.getElementById("timeStart").value + ":00");
     var dateEnd = new Date(document.getElementById("dateEnd").value + "T" + document.getElementById("timeEnd").value + ":00");
     if (dateStart > dateEnd) {
