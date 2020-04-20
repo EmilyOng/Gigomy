@@ -1,7 +1,7 @@
-table {
+/* table {
   overflow-x: auto;
   display: inline-block;
-}
+} */
 
 body {
   display: flex;
