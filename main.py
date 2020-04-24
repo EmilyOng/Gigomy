@@ -1,5 +1,5 @@
 from flask import Flask, render_template, redirect, url_for, request, session
-from flask_socketio import SocketIO, send, emit
+from flask_socketio import SocketIO, emit
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import login_required, LoginManager, UserMixin, current_user, login_user, logout_user
 
@@ -31,7 +31,7 @@ def processJob (job):
     jobPrice = "${:,.2f}".format(job.jobPrice)
     jobDatePosted_ = job.jobDatePosted
 
-    sg =pytz.timezone("Asia/Singapore")
+    sg = pytz.timezone("Asia/Singapore")
     jobDatePosted_ = jobDatePosted_.astimezone(sg)
 
     jobDatePosted = (jobDatePosted_.strftime("%Y-%m-%d %H:%M:%S"))
@@ -266,7 +266,7 @@ def chat (username=""):
     messages = []
     messages_.sort()
     for message in messages_:
-      sg =pytz.timezone("Asia/Singapore")
+      sg = pytz.timezone("Asia/Singapore")
       datePosted = message[0].astimezone(sg)
       datePosted = datePosted.strftime("%Y-%m-%d %H:%M:%S")
       messages.append([datePosted, message[1]])
@@ -296,7 +296,7 @@ def receivedData (data):
     db.session.add(msg)
     db.session.commit()
 
-    sg =pytz.timezone("Asia/Singapore")
+    sg = pytz.timezone("Asia/Singapore")
     datePosted = datePosted.astimezone(sg)
     
     data["datePosted"] = (datePosted.strftime("%Y-%m-%d %H:%M:%S"))
