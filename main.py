@@ -345,6 +345,8 @@ def takeUpJob (jobID):
     job = Job.query.filter_by(jobID = jobID).first()
     if job is None:
         return redirect(url_for("index", _scheme="https", _external=True))
+    if job.jobReceiver:
+      return redirect(url_for("see", id=jobID, _scheme="https", _external=True))
     job.jobReceiver = current_user.username
     db.session.commit()
     session["takenUpJob"] = True
@@ -500,6 +502,19 @@ def addJob ():
     db.session.add(job)
     db.session.commit()
     return redirect(url_for("index", _scheme="https", _external=True))
+
+
+@app.route("/api/getJobs", methods=["GET"])
+def getJobs ():
+  jobs_ =  Job.query.all()
+  jobs = []
+  for job in jobs_:
+    job_ = processJob(job)
+    job_["jobDatePosted"] = str(job_["jobDatePosted"])
+    job_["jobDateStart"] = str(job_["jobDateStart"])
+    job_["jobDateEnd"] = str(job_["jobDateEnd"])
+    jobs.append(job_)
+  return json.dumps(jobs)
 
 
 if __name__ == "__main__":
